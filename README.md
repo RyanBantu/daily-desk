@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Westbrook School Portal (demo)
 
-## Getting Started
+A frontend-only demo of a school management portal for sales demos, with Admin, Teacher, Student and Parent views. It is a Next.js port of [`reference/portal.html`](reference/portal.html).
 
-First, run the development server:
+> **This is a demo.** There is no backend, no database and no real login. All data lives in your browser's `localStorage`, so changes you make during a demo survive page reloads but are only visible on that browser. Use **Reset demo data** (sidebar footer, or Admin › School settings) to restore the sample school.
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). You land on `/login`. Pick a role (and a teacher, student or parent) and click **Log in**. No password is needed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Other scripts:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build   # production build (must pass with no type errors)
+npm run start   # serve the production build
+npm run lint
+```
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push this folder to a Git repository (GitHub, GitLab or Bitbucket).
+2. In Vercel, choose **Add New › Project** and import the repository.
+3. Keep every default setting (framework preset Next.js, no environment variables) and click **Deploy**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Or from the command line: `npx vercel` and accept the defaults.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How the demo works
 
-## Deploy on Vercel
+- **Login**: `/login` saves `{ role, userId }` to a `demo_session` cookie and the app store. `proxy.ts` (Next.js 16's name for middleware) sends visitors without a session to `/login`, and sends anyone on the wrong portal to their own role's home.
+- **Switching roles**: the segmented switch in the header jumps between portals; the dropdowns next to it change which teacher, student or parent you are. **Log out** returns to `/login`.
+- **Data**: seeded from `lib/seed.ts` on first visit, with dates generated relative to today so the demo always looks current. Stored with Zustand `persist` under the `westbrook.portal.v2` key.
+- **Teacher → parent flow**: anything a teacher sends "to parents" (exam scores, homework feedback, remarks) appears immediately in that child's Parent › Messages.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project layout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Path | What it holds |
+| --- | --- |
+| `app/login` | Demo login page |
+| `app/(portal)/{admin,teacher,student,parent}` | One route per sidebar item; shared header and sidebar in `app/(portal)/layout.tsx` |
+| `components/` | Header, Sidebar, RoleSwitch, PageHead, Panel, StatRow, Pill, TimetableGrid, CourseTimeline, ResultsTable, AttendanceSummary, and other shared pieces |
+| `lib/types.ts` | Data model |
+| `lib/seed.ts` | Sample school |
+| `lib/store.ts` | Zustand store with `localStorage` persistence |
+| `lib/selectors.ts` | Attendance %, averages, CBSE grade, teacher class·subject contexts, due state |
+| `app/globals.css` | Theme colours, school palettes and component styles |
