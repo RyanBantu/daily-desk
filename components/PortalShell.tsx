@@ -13,11 +13,10 @@ function Shell({ children }: { children: ReactNode }) {
   const db = useDb();
   const area = usePathname().split("/")[1];
   const role = isRole(area) ? area : "admin";
-  const sessionRole = useStore((s) => s.session?.role);
-  const signIn = useStore((s) => s.signIn);
   useEffect(() => {
-    if (sessionRole !== role) signIn(role);
-  }, [role, sessionRole, signIn]);
+    const { session, signIn } = useStore.getState();
+    if (session?.role !== role) signIn(role);
+  }, [role]);
   let body = children;
   if ((role === "student" || role === "parent") && !db.students.length)
     body = <Empty>No students have been added yet. Class teachers add them from the Teacher portal.</Empty>;
