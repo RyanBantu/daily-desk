@@ -89,7 +89,7 @@ export function seed(): DB {
           .forEach((s) => {
             const x = rnd();
             rec[s.id] =
-              s.name === "Dev Nair" ? (x < 0.3 ? "A" : x < 0.36 ? "L" : "P") : x < 0.06 ? "A" : x < 0.1 ? "L" : "P";
+              s.name === "Dev Nair" ? (x < 0.4 ? "A" : x < 0.45 ? "L" : "P") : x < 0.06 ? "A" : x < 0.1 ? "L" : "P";
           });
         attendance[`${cls}|${sub}|${date}`] = rec;
       });
@@ -162,6 +162,17 @@ export function seed(): DB {
         });
       }),
     );
+
+  let r1 = 7;
+  const rnd1 = () => (r1 = (r1 * 9301 + 49297) % 233280) / 233280;
+  d = nextSchoolDay(dayOffset(-52));
+  ut.forEach((sub) => {
+    const id = uid();
+    exams.push({ id, grade: 10, cls: null, name: "Unit Test 1", subject: sub, date: d, time: "09:00", max: 25, sent: true });
+    marks[id] = {};
+    students.forEach((s) => (marks[id][s.id] = Math.round(10 + rnd1() * 14)));
+    d = nextSchoolDay(addDays(d, 1));
+  });
 
   const unit = (cls: string, subject: string) => ([title, a, b]: [string, number, number]) => ({
     id: uid(),

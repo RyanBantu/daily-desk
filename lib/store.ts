@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { toast } from "@/components/Toast";
+import { enrichSeed } from "./seed-analytics";
 import { seed } from "./seed";
 import { STORAGE_KEY, writeSessionCookie } from "./session";
 import type { DB, Message, Role, Session } from "./types";
@@ -73,14 +74,22 @@ export const useStore = create<State>()(
         writeSessionCookie(null);
         set({ session: null });
       },
-      reset: () => set({ db: seed() }),
+      reset: () => set({ db: enrichSeed(seed()) }),
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => safeStorage),
       skipHydration: true,
       partialize: (s) => ({ db: s.db, session: s.session, ui: s.ui }),
+      migrate: (persisted) => {
+        const p = persisted as { session?: Session; ui?: UiState } | undefined;
+        return {
+          db: enrichSeed(seed()),
+          session: p?.session ?? null,
+          ui: p?.ui ?? { tid: "t1", sid: "s1", pid: "s3", tctx: "", ttCls: "10-A" },
+        };
+      },
     },
   ),
 );
@@ -90,7 +99,7 @@ let booting: Promise<void> | null = null;
 export function bootStore() {
   booting ??= Promise.resolve(useStore.persist.rehydrate()).then(() => {
     const s = useStore.getState();
-    useStore.setState({ ready: true, db: s.db ?? seed() });
+    useStore.setState({ ready: true, db: s.db ?? enrichSeed(seed()) });
   });
   return booting;
 }

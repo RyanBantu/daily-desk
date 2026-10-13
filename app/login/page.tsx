@@ -1,135 +1,217 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
-import { StudentOptions } from "@/components/Header";
+import { FormEvent, Suspense, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Ready } from "@/components/StoreBoot";
-import { toast } from "@/components/Toast";
-import { student, teacher } from "@/lib/selectors";
-import { isRole } from "@/lib/session";
+import {
+  type Role,
+  ROLES,
+  ROLE_LABEL,
+  DEMO_PASSWORDS,
+  checkDemoPassword,
+  isRole,
+} from "@/lib/demo-auth";
 import { useDb, useStore } from "@/lib/store";
-import type { Role } from "@/lib/types";
-import { crestInitials } from "@/lib/utils";
+import { crestInitials, firstName } from "@/lib/utils";
+
+type Option = { value: string; label: string; group?: string };
 
 export default function LoginPage() {
   return (
     <Ready>
-      <LoginCard />
+      <Suspense fallback={null}>
+        <LoginFromQuery />
+      </Suspense>
     </Ready>
   );
 }
 
-function LoginCard() {
-  const db = useDb();
+function LoginFromQuery() {
+  const params = useSearchParams();
+  const initialRole: Role = isRole(params.get("role")) ? (params.get("role") as Role) : "admin";
+  return <LoginForm key={initialRole} initialRole={initialRole} />;
+}
+
+function LoginForm({ initialRole }: { initialRole: Role }) {
   const router = useRouter();
-  const { ui, session, signIn } = useStore();
-  const [role, setRole] = useState<Role>(session?.role ?? "admin");
-  const [tid, setTid] = useState(teacher(db, ui.tid)?.id ?? db.teachers[0]?.id ?? "");
-  const [sid, setSid] = useState(student(db, ui.sid)?.id ?? db.students[0]?.id ?? "");
-  const [pid, setPid] = useState(student(db, ui.pid)?.id ?? db.students[0]?.id ?? "");
+  const db = useDb();
+  const signIn = useStore((s) => s.signIn);
 
-  const userId = role === "teacher" ? tid : role === "student" ? sid : role === "parent" ? pid : "admin";
-  const missing =
-    role === "teacher" && !db.teachers.length
-      ? "No teachers yet. Log in as Admin and add staff under Teachers & subjects."
-      : (role === "student" || role === "parent") && !db.students.length
-        ? "No students yet. A class teacher adds them from My class roster."
-        : null;
+  const [role, setRole] = useState<Role>(initialRole);
+  const [userPick, setUserPick] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [hintsOpen, setHintsOpen] = useState(false);
+  const pwRef = useRef<HTMLInputElement>(null);
 
-  function submit(e: FormEvent) {
+  const people: Option[] = useMemo(() => {
+    if (role === "teacher") return db.teachers.map((t) => ({ value: t.id, label: t.name }));
+    if (role === "student")
+      return db.students.map((s) => ({ value: s.id, label: s.name, group: `Class ${s.cls}` }));
+    if (role === "parent")
+      return db.students.map((s) => ({
+        value: s.id,
+        label: `${s.parent} (parent of ${firstName(s.name)})`,
+        group: `Class ${s.cls}`,
+      }));
+    return [];
+  }, [role, db.teachers, db.students]);
+
+  const userId = role === "admin" ? "admin" : people.some((p) => p.value === userPick) ? userPick : (people[0]?.value ?? "");
+
+  function changeRole(r: Role) {
+    setRole(r);
+    setUserPick("");
+    setPassword("");
+    setError("");
+  }
+
+  function fillDemo(r: Role) {
+    setRole(r);
+    setUserPick("");
+    setPassword(DEMO_PASSWORDS[r]);
+    setError("");
+  }
+
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (missing || !userId) return toast(missing ?? "Choose who to log in as.");
+    if (role !== "admin" && !userId) {
+      setError("Choose who you are logging in as.");
+      return;
+    }
+    if (!checkDemoPassword(role, password)) {
+      setError(`That password doesn't match the ${ROLE_LABEL[role]} account. Check the demo passwords below.`);
+      pwRef.current?.focus();
+      return;
+    }
+    setError("");
+    setBusy(true);
+    await new Promise((r) => setTimeout(r, 300));
     signIn(role, userId);
-    const who =
-      role === "admin"
-        ? "Principal’s office"
-        : role === "teacher"
-          ? teacher(db, tid)?.name
-          : role === "student"
-            ? student(db, sid)?.name
-            : student(db, pid)?.parent;
-    toast(`Logged in as ${who}`);
     router.push(`/${role}`);
   }
 
+  const groups = useMemo(() => {
+    const map = new Map<string, Option[]>();
+    people.forEach((p) => {
+      const g = p.group ?? "";
+      map.set(g, [...(map.get(g) ?? []), p]);
+    });
+    return [...map.entries()];
+  }, [people]);
+
+  const whoLabel = role === "teacher" ? "Teacher" : role === "student" ? "Student" : "Parent";
+  const school = db.school;
+
   return (
-    <div className="login-wrap">
-      <section className="panel login">
-        <div className="brand" style={{ marginBottom: 18 }}>
-          <div className="crest">{crestInitials(db.school.name)}</div>
-          <div style={{ minWidth: 0 }}>
-            <b>{db.school.name}</b>
-            <div className="muted" style={{ fontSize: ".76rem" }}>
-              {db.school.board} · Academic year {db.school.year}
-            </div>
+    <main className="login-page">
+      <form className="login-card" onSubmit={onSubmit} noValidate>
+        <div className="login-brand">
+          <div className="crest" aria-hidden>
+            {crestInitials(school.name)}
+          </div>
+          <div>
+            <h1>{school.name}</h1>
+            <p>
+              {school.board} · Academic year {school.year}
+            </p>
           </div>
         </div>
-        <span className="demo-pill">Demo mode · no password needed</span>
-        <form className="form" style={{ marginTop: 18 }} onSubmit={submit}>
-          <label className="f">
-            Log in as
-            <select value={role} onChange={(e) => isRole(e.target.value) && setRole(e.target.value)}>
-              <option value="admin">Admin</option>
-              <option value="teacher">Teacher</option>
-              <option value="student">Student</option>
-              <option value="parent">Parent</option>
+        <span className="login-pill">Demo mode · sample data only</span>
+
+        <label className="login-field" htmlFor="role">
+          Log in as
+          <select id="role" value={role} onChange={(e) => isRole(e.target.value) && changeRole(e.target.value)}>
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {ROLE_LABEL[r]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {role !== "admin" && (
+          <label className="login-field" htmlFor="who">
+            {whoLabel}
+            <select id="who" value={userId} onChange={(e) => setUserPick(e.target.value)}>
+              {groups.map(([g, opts]) =>
+                g ? (
+                  <optgroup key={g} label={g}>
+                    {opts.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  opts.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))
+                ),
+              )}
             </select>
           </label>
+        )}
 
-          {role === "admin" ? <p className="muted">You will be signed in as the Principal’s office.</p> : null}
-          {role === "teacher" && db.teachers.length ? (
-            <label className="f">
-              Teacher
-              <select value={tid} onChange={(e) => setTid(e.target.value)}>
-                {db.teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          {role === "student" && db.students.length ? (
-            <label className="f">
-              Student
-              <select value={sid} onChange={(e) => setSid(e.target.value)}>
-                <StudentOptionsFlat />
-              </select>
-            </label>
-          ) : null}
-          {role === "parent" && db.students.length ? (
-            <label className="f">
-              Parent
-              <select value={pid} onChange={(e) => setPid(e.target.value)}>
-                <StudentOptions db={db} asParent />
-              </select>
-            </label>
-          ) : null}
-          {missing ? <p className="muted">{missing}</p> : null}
+        <label className="login-field" htmlFor="password">
+          Password
+          <div className={`pw-wrap ${error ? "invalid" : ""}`}>
+            <input
+              id="password"
+              ref={pwRef}
+              type={show ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
+              aria-invalid={!!error}
+              aria-describedby={error ? "pw-error" : undefined}
+              placeholder={`${ROLE_LABEL[role]} password`}
+            />
+            <button type="button" className="pw-toggle" onClick={() => setShow((v) => !v)} aria-label={show ? "Hide password" : "Show password"}>
+              {show ? "Hide" : "Show"}
+            </button>
+          </div>
+          {error && (
+            <span id="pw-error" className="login-error" role="alert">
+              {error}
+            </span>
+          )}
+        </label>
 
-          <button type="submit" className="btn primary block" disabled={!!missing}>
-            Log in
+        <button className="login-submit" type="submit" disabled={busy}>
+          {busy ? "Logging in…" : "Log in"}
+        </button>
+
+        <div className="demo-hints">
+          <button type="button" className="hint-toggle" onClick={() => setHintsOpen((v) => !v)} aria-expanded={hintsOpen}>
+            {hintsOpen ? "Hide demo passwords" : "Show demo passwords"}
           </button>
-        </form>
-      </section>
-    </div>
+          {hintsOpen && (
+            <table>
+              <tbody>
+                {ROLES.map((r) => (
+                  <tr key={r}>
+                    <td>{ROLE_LABEL[r]}</td>
+                    <td className="mono">{DEMO_PASSWORDS[r]}</td>
+                    <td className="r">
+                      <button type="button" onClick={() => fillDemo(r)}>
+                        Use
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </form>
+    </main>
   );
-}
-
-/** Students grouped by class, shown as "10-A · Amn Shetty". */
-function StudentOptionsFlat() {
-  const db = useDb();
-  const groups = new Map<string, typeof db.students>();
-  db.students.forEach((s) => groups.set(s.cls, [...(groups.get(s.cls) ?? []), s]));
-  return [...groups.entries()]
-    .sort(([a], [b]) => Number(a.split("-")[0]) - Number(b.split("-")[0]) || a.localeCompare(b))
-    .map(([cls, list]) => (
-      <optgroup key={cls} label={`Class ${cls}`}>
-        {list.map((s) => (
-          <option key={s.id} value={s.id}>
-            {cls} · {s.name}
-          </option>
-        ))}
-      </optgroup>
-    ));
 }
