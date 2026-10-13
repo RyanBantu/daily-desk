@@ -107,7 +107,51 @@ function LoginForm({ initialRole }: { initialRole: Role }) {
 
   return (
     <main className="login-page">
-      <form className="login-card" onSubmit={onSubmit} noValidate>
+      <section className="login-banner" aria-label="Daily Desk">
+        <div className="login-banner-top">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/daily-desk-mark-reverse.svg"
+            width={64}
+            height={64}
+            alt=""
+            aria-hidden
+          />
+          <div>
+            <p className="login-banner-name">
+              <span>D</span>aily <span>D</span>esk
+            </p>
+            <p className="login-banner-kicker">School management portal</p>
+          </div>
+        </div>
+        <div className="login-banner-mid">
+          <h1>
+            Your whole school, <em>one desk.</em>
+          </h1>
+          <ul className="login-banner-points">
+            <li>
+              <Tick />
+              Attendance, homework, exam scores and remarks in one place
+            </li>
+            <li>
+              <Tick />
+              Timetables, course plans and exam datesheets for every class
+            </li>
+            <li>
+              <Tick />
+              Parents see scores and teacher remarks the same day
+            </li>
+          </ul>
+        </div>
+        <div className="login-banner-tags">
+          <span>Admin</span>
+          <span>Teachers</span>
+          <span>Students</span>
+          <span>Parents</span>
+        </div>
+      </section>
+      <div className="login-panel">
+        <form className="login-card" onSubmit={onSubmit} noValidate>
         <div className="login-brand">
           <div className="crest" aria-hidden>
             {crestInitials(school.name)}
@@ -211,7 +255,16 @@ function LoginForm({ initialRole }: { initialRole: Role }) {
             </table>
           )}
         </div>
-      </form>
+        </form>
+      </div>
     </main>
+  );
+}
+
+function Tick() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
+      <path d="M3.2 8.3 6.4 11.4 12.8 4.6" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

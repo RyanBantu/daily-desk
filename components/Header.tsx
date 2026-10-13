@@ -15,7 +15,7 @@ export function Brand({ db }: { db: DB }) {
       <div className="crest">{crestInitials(db.school.name)}</div>
       <div style={{ minWidth: 0 }}>
         <b>{db.school.name}</b>
-        <span>
+        <span className="brand-sub">
           {db.school.board} · Academic year {db.school.year}
         </span>
       </div>
