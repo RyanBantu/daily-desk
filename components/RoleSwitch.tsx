@@ -17,7 +17,7 @@ export function RoleSwitch({ role }: { role: Role }) {
   }
 
   return (
-    <div className="seg" role="group" aria-label="Switch portal">
+    <div className="seg" role="group" aria-label="Demo: open another role’s login">
       {ROLES.map((r) => (
         <button key={r} type="button" aria-pressed={r === role} onClick={() => go(r)}>
           {ROLE_LABEL[r]}

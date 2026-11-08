@@ -9,10 +9,14 @@ import { STORAGE_KEY, writeSessionCookie } from "./session";
 import type { DB, Message, Role, Session } from "./types";
 import { today, uid } from "./utils";
 
+const defaultUi = (): UiState => ({ tid: "t1", sid: "s1", pid: "p3", ward: "s3", tctx: "", ttCls: "10-A" });
+
 export interface UiState {
   tid: string;
   sid: string;
   pid: string;
+  /** Student id of the ward the signed-in parent is viewing */
+  ward: string;
   /** "cls|subject" the teacher is working in */
   tctx: string;
   ttCls: string;
@@ -53,7 +57,7 @@ export const useStore = create<State>()(
       ready: false,
       db: null,
       session: null,
-      ui: { tid: "t1", sid: "s1", pid: "s3", tctx: "", ttCls: "10-A" },
+      ui: defaultUi(),
       mutate: (fn) => {
         const cur = get().db;
         if (!cur) return;
@@ -66,7 +70,13 @@ export const useStore = create<State>()(
         const s = get();
         const id = role === "admin" ? "admin" : (userId ?? s.ui[uiField[role]]);
         const session = { role, userId: id };
-        const ui = role === "admin" ? s.ui : { ...s.ui, [uiField[role]]: id, ...(role === "teacher" && id !== s.ui.tid ? { tctx: "" } : {}) };
+        let ui = s.ui;
+        if (role === "teacher") ui = { ...s.ui, tid: id, ...(id !== s.ui.tid ? { tctx: "" } : {}) };
+        else if (role === "student") ui = { ...s.ui, sid: id };
+        else if (role === "parent") {
+          const kids = s.db?.parents.find((p) => p.id === id)?.children ?? [];
+          ui = { ...s.ui, pid: id, ward: kids.includes(s.ui.ward) ? s.ui.ward : (kids[0] ?? "") };
+        }
         writeSessionCookie(session);
         set({ session, ui });
       },
@@ -78,16 +88,26 @@ export const useStore = create<State>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => safeStorage),
       skipHydration: true,
       partialize: (s) => ({ db: s.db, session: s.session, ui: s.ui }),
       migrate: (persisted) => {
-        const p = persisted as { session?: Session; ui?: UiState } | undefined;
+        const p = persisted as { session?: Session; ui?: Partial<UiState> } | undefined;
+        const db = enrichSeed(seed());
+        let session = p?.session ?? null;
+        const parentId = session?.role === "parent" ? session.userId : null;
+        if (parentId && !db.parents.some((x) => x.id === parentId)) {
+          const child = db.students.find((s) => s.id === parentId);
+          session = { role: "parent", userId: child?.parentId ?? "p3" };
+        }
+        const pid = db.parents.some((x) => x.id === p?.ui?.pid) ? p!.ui!.pid! : "p3";
+        const kids = db.parents.find((x) => x.id === pid)?.children ?? ["s3"];
+        const ward = kids.includes(p?.ui?.ward ?? "") ? p!.ui!.ward! : (kids[0] ?? "s3");
         return {
-          db: enrichSeed(seed()),
-          session: p?.session ?? null,
-          ui: p?.ui ?? { tid: "t1", sid: "s1", pid: "s3", tctx: "", ttCls: "10-A" },
+          db,
+          session,
+          ui: { ...defaultUi(), ...p?.ui, pid, ward },
         };
       },
     },
@@ -99,7 +119,8 @@ let booting: Promise<void> | null = null;
 export function bootStore() {
   booting ??= Promise.resolve(useStore.persist.rehydrate()).then(() => {
     const s = useStore.getState();
-    useStore.setState({ ready: true, db: s.db ?? enrichSeed(seed()) });
+    const db = s.db?.parents && s.db.fees ? s.db : enrichSeed(seed());
+    useStore.setState({ ready: true, db });
   });
   return booting;
 }

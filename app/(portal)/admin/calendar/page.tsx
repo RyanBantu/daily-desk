@@ -55,7 +55,7 @@ export default function AdminCalendar() {
     <>
       <PageHead
         eyebrow={PORTAL_LABEL.admin}
-        title="Deadlines & notices"
+        title="Announcements"
         sub="School-wide deadlines and announcements, including inspection visits. Choose who sees each one."
       />
       <div className="grid2">

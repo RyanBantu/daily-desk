@@ -57,7 +57,7 @@ export default function AdminExams() {
     <>
       <PageHead
         eyebrow={PORTAL_LABEL.admin}
-        title="Exam schedule"
+        title="Exams & results"
         sub="Publish datesheets for each class. Students and parents see them straight away; teachers enter scores against them."
       />
       <Panel title="Schedule an exam">

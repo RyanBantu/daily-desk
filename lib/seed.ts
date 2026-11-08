@@ -1,5 +1,5 @@
 import { cbse } from "./selectors";
-import type { DB, Exam, Mark, Message, Remark, Student, Subject, Teacher, Timetable } from "./types";
+import type { DB, Exam, FeeCharge, Mark, Message, Parent, Remark, Student, Subject, Teacher, Timetable } from "./types";
 import { DAYS, PERIODS, addDays, dayOffset, fmtDateL, nextSchoolDay, pastSchoolDays, uid, weekdayKey } from "./utils";
 
 /** Builds the sample school. Dates are relative to today so the demo always looks current. */
@@ -66,14 +66,63 @@ export function seed(): DB {
     ["10-B", "Rohan Das", "Bikash Das"],
     ["10-B", "Sneha Pillai", "Gopal Pillai"],
     ["10-B", "Vikram Singh", "Harpreet Singh"],
+    ["10-B", "Nina Mathew", "Thomas Mathew"],
   ];
   const students: Student[] = fam.map(([cls, name, parent], i) => ({
     id: "s" + (i + 1),
     cls,
     name,
     parent,
+    parentId: "",
     phone: "+91 98" + String(45012300 + i * 7311).slice(0, 8),
   }));
+  const parents: Parent[] = [];
+  const parentByName = new Map<string, Parent>();
+  students.forEach((s) => {
+    let p = parentByName.get(s.parent);
+    if (!p) {
+      p = { id: "p" + (parentByName.size + 1), name: s.parent, phone: s.phone, children: [] };
+      parentByName.set(s.parent, p);
+      parents.push(p);
+    }
+    p.children.push(s.id);
+    s.parentId = p.id;
+  });
+  const fees: FeeCharge[] = [];
+  students.forEach((s, i) => {
+    const tuitionPaid = s.name === "Dev Nair" ? 0 : s.name === "Pete Mathew" ? 10000 : 18500;
+    fees.push({
+      id: uid(),
+      sid: s.id,
+      title: "Term 1 tuition",
+      amount: 18500,
+      due: dayOffset(4),
+      paid: tuitionPaid,
+      paidOn: tuitionPaid >= 18500 ? dayOffset(-12) : tuitionPaid > 0 ? dayOffset(-8) : null,
+    });
+    if (i % 3 !== 2) {
+      const transportPaid = s.name === "Dev Nair" ? 0 : 4500;
+      fees.push({
+        id: uid(),
+        sid: s.id,
+        title: "Transport (Jul–Sep)",
+        amount: 4500,
+        due: dayOffset(-2),
+        paid: transportPaid,
+        paidOn: transportPaid ? dayOffset(-20) : null,
+      });
+    }
+    const examPaid = s.name === "Jane D'Souza" ? 0 : 1200;
+    fees.push({
+      id: uid(),
+      sid: s.id,
+      title: "Term 1 exam fee",
+      amount: 1200,
+      due: dayOffset(10),
+      paid: examPaid,
+      paidOn: examPaid ? dayOffset(-5) : null,
+    });
+  });
 
   const attendance: DB["attendance"] = {};
   pastSchoolDays(12).forEach((date) => {
@@ -229,5 +278,7 @@ export function seed(): DB {
       { id: uid(), hw: h1, sid: "s4", file: { name: "notebook_photo.jpg", size: 845000 }, comment: "", time: new Date(Date.now() - 72e6).toISOString(), status: "reviewed", score: 9, remark: "Neat work. Watch your indentation in program 3.", shared: true },
       { id: uid(), hw: h3, sid: "s1", file: { name: "EyeDiagrams_Amn.pdf", size: 310000 }, comment: "", time: new Date(Date.now() - 108e6).toISOString(), status: "pending", score: null, remark: "", shared: false },
     ],
+    parents,
+    fees,
   };
 }

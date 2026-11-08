@@ -138,7 +138,7 @@ export default function TeacherMarks() {
   const mutate = useStore((s) => s.mutate);
   const { cls, sub, tid } = useTeacherCtx();
   const [examSel, setExamSel] = useState("");
-  if (!cls) return (<><TeacherHead title="Exam scores" /><NoClasses /></>);
+  if (!cls) return (<><TeacherHead title="Marks" /><NoClasses /></>);
 
   const exams = examsFor(db, cls).filter((e) => e.subject === sub);
   const t0 = today();
@@ -160,7 +160,7 @@ export default function TeacherMarks() {
 
   return (
     <>
-      <TeacherHead title="Exam scores" sub="Enter marks for exams from the school datesheet or your own class tests, then send them to parents." />
+      <TeacherHead title="Marks" sub="Enter marks for exams from the school datesheet or your own class tests, then send them to parents." />
       <Panel title="Choose an exam">
         <div className="chips">
           {exams.length ? (

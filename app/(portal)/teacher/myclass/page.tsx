@@ -8,6 +8,7 @@ import { PctPill } from "@/components/Pill";
 import { PORTAL_LABEL } from "@/components/Sidebar";
 import { toast } from "@/components/Toast";
 import { useTeacher } from "@/lib/hooks";
+import { ensureParent, unlinkStudent } from "@/lib/access";
 import { attStats, avgPct, classStudents, classTeacherOf, rollOf } from "@/lib/selectors";
 import { useDb, useStore } from "@/lib/store";
 import { formValues, uid } from "@/lib/utils";
@@ -22,7 +23,7 @@ export default function TeacherRoster() {
   if (!ct.length)
     return (
       <>
-        <PageHead eyebrow={PORTAL_LABEL.teacher} title="My class roster" />
+        <PageHead eyebrow={PORTAL_LABEL.teacher} title="Class register" />
         <Empty>You are not a class teacher this year. The school office assigns class teachers from the Admin portal.</Empty>
       </>
     );
@@ -35,7 +36,9 @@ export default function TeacherRoster() {
     const form = e.currentTarget;
     const { g } = formValues(form);
     mutate((d) => {
-      d.students.push({ id: "s" + uid(), cls, name: g("name"), parent: g("parent"), phone: g("phone") });
+      const id = "s" + uid();
+      const parentId = ensureParent(d, g("parent"), g("phone"), id);
+      d.students.push({ id, cls, name: g("name"), parent: g("parent"), parentId, phone: g("phone") });
     });
     toast(`${g("name")} added to ${cls}`);
     form.reset();
@@ -45,8 +48,8 @@ export default function TeacherRoster() {
     <>
       <PageHead
         eyebrow={`Class teacher · ${cls}`}
-        title={`Class ${cls} roster`}
-        sub="As class teacher you add the students in your section. Roll numbers follow the order of the list."
+        title={`Class ${cls} register`}
+        sub="Homeroom roll. Add the students in your section. Roll numbers follow the order of the list. Each child is linked to a parent account."
         right={
           ct.length > 1 ? (
             <div className="chips">
@@ -115,9 +118,7 @@ export default function TeacherRoster() {
                       <td className="r">
                         <ConfirmButton
                           onConfirm={() => {
-                            mutate((d) => {
-                              d.students = d.students.filter((x) => x.id !== s.id);
-                            });
+                            mutate((d) => unlinkStudent(d, s.id));
                             toast("Student removed");
                           }}
                         >

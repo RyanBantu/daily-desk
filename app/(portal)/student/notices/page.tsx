@@ -14,7 +14,7 @@ export default function StudentNotices() {
   if (!s) return null;
   return (
     <>
-      <StudentHead title="Remarks & notices" sub="Feedback from your teachers and announcements from school, including inspection visits." />
+      <StudentHead title="Updates" sub="Feedback from your teachers and announcements from school. Only remarks written about you appear here." />
       <div className="grid2">
         <Panel title="Teacher remarks">
           <RemarkList list={db.remarks.filter((r) => r.sid === s.id).sort((a, b) => b.date.localeCompare(a.date))} />

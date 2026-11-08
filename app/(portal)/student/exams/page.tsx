@@ -11,7 +11,7 @@ export default function StudentExams() {
   if (!s) return null;
   return (
     <>
-      <StudentHead title="Exams & results" sub="Your datesheet and every published score." />
+      <StudentHead title="Marks & feedback" sub="Your datesheet and every published score. Other students’ marks are not shown." />
       <Panel title="Upcoming exams">
         <ExamSchedule cls={s.cls} />
       </Panel>

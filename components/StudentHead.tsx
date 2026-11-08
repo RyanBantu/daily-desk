@@ -13,5 +13,5 @@ export function StudentHead({ title, sub }: { title: string; sub?: ReactNode }) 
 /** Eyebrow "Parent of Pete Mathew · Class 10-A". */
 export function ParentHead({ title, sub }: { title: string; sub?: ReactNode }) {
   const c = useChild();
-  return <PageHead eyebrow={c ? `Parent of ${c.name} · Class ${c.cls}` : "Parent portal"} title={title} sub={sub} />;
+  return <PageHead eyebrow={c ? `Linked ward · ${c.name} · Class ${c.cls}` : "Parent portal"} title={title} sub={sub} />;
 }

@@ -12,7 +12,8 @@ import {
   isRole,
 } from "@/lib/demo-auth";
 import { useDb, useStore } from "@/lib/store";
-import { crestInitials, firstName } from "@/lib/utils";
+import { parentLabel } from "@/lib/access";
+import { crestInitials } from "@/lib/utils";
 
 type Option = { value: string; label: string; group?: string };
 
@@ -51,13 +52,12 @@ function LoginForm({ initialRole }: { initialRole: Role }) {
     if (role === "student")
       return db.students.map((s) => ({ value: s.id, label: s.name, group: `Class ${s.cls}` }));
     if (role === "parent")
-      return db.students.map((s) => ({
-        value: s.id,
-        label: `${s.parent} (parent of ${firstName(s.name)})`,
-        group: `Class ${s.cls}`,
+      return db.parents.map((p) => ({
+        value: p.id,
+        label: parentLabel(db, p),
       }));
     return [];
-  }, [role, db.teachers, db.students]);
+  }, [role, db.teachers, db.students, db.parents]);
 
   const userId = role === "admin" ? "admin" : people.some((p) => p.value === userPick) ? userPick : (people[0]?.value ?? "");
 

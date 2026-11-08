@@ -12,7 +12,7 @@ export default function ParentMessages() {
   if (!c) return null;
   return (
     <>
-      <ParentHead title="Messages from teachers" sub="Scores, homework feedback and remarks your child’s teachers have sent you." />
+      <ParentHead title="Teacher updates" sub="Scores, homework feedback and remarks teachers have sent for this child only." />
       <Panel>
         <MessageList list={db.messages.filter((m) => m.sid === c.id).sort((a, b) => b.date.localeCompare(a.date))} />
       </Panel>

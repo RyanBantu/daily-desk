@@ -13,7 +13,7 @@ export default function ParentResults() {
   if (!c) return null;
   return (
     <>
-      <ParentHead title="Results & remarks" />
+      <ParentHead title="Subject marks" sub="Exam scores and remarks teachers have shared for this child only." />
       <Panel title="Exam results" right={<span className="muted">CBSE grading scale</span>}>
         <ResultsTable sid={c.id} />
       </Panel>

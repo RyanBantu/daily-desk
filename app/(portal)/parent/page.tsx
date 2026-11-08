@@ -26,7 +26,7 @@ export default function ParentOverview() {
 
   return (
     <>
-      <PageHead eyebrow={PORTAL_LABEL.parent} title={`Welcome, ${c.parent}`} sub={`Here is how ${firstName(c.name)} is doing in Class ${c.cls}.`} />
+      <PageHead eyebrow={PORTAL_LABEL.parent} title={`Welcome, ${c.parent}`} sub={`Linked ward: ${c.name}, Class ${c.cls}. You only see this child’s records.`} />
       <KpiRow
         items={[
           testKpi(db, c),

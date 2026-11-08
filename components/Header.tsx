@@ -2,7 +2,8 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useChild, useMe, useTeacher, useTeacherCtx } from "@/lib/hooks";
+import { parentLabel, wardsOf } from "@/lib/access";
+import { useChild, useMe, useParentAccount, useTeacher, useTeacherCtx } from "@/lib/hooks";
 import { allClasses, classStudents, ctxLabel } from "@/lib/selectors";
 import { useDb, useStore } from "@/lib/store";
 import type { DB, Role } from "@/lib/types";
@@ -66,17 +67,45 @@ function TeacherIdentity() {
   );
 }
 
-function StudentIdentity({ role }: { role: "student" | "parent" }) {
+function StudentIdentity() {
   const db = useDb();
   const me = useMe();
-  const child = useChild();
   const signIn = useStore((s) => s.signIn);
   if (!db.students.length) return null;
-  const current = role === "parent" ? child : me;
   return (
-    <select aria-label={role === "parent" ? "Parent" : "Student"} value={current?.id ?? ""} onChange={(e) => signIn(role, e.target.value)}>
-      <StudentOptions db={db} asParent={role === "parent"} />
+    <select aria-label="Student" value={me?.id ?? ""} onChange={(e) => signIn("student", e.target.value)}>
+      <StudentOptions db={db} />
     </select>
+  );
+}
+
+function ParentIdentity() {
+  const db = useDb();
+  const parent = useParentAccount();
+  const child = useChild();
+  const signIn = useStore((s) => s.signIn);
+  const setUi = useStore((s) => s.setUi);
+  const wards = wardsOf(db, parent?.id);
+  if (!db.parents.length) return null;
+  return (
+    <>
+      <select aria-label="Parent" value={parent?.id ?? ""} onChange={(e) => signIn("parent", e.target.value)}>
+        {db.parents.map((p) => (
+          <option key={p.id} value={p.id}>
+            {parentLabel(db, p)}
+          </option>
+        ))}
+      </select>
+      {wards.length > 1 ? (
+        <select aria-label="Linked ward" value={child?.id ?? ""} onChange={(e) => setUi({ ward: e.target.value })}>
+          {wards.map((s) => (
+            <option key={s.id} value={s.id}>
+              {firstName(s.name)} · {s.cls}
+            </option>
+          ))}
+        </select>
+      ) : null}
+    </>
   );
 }
 
@@ -91,7 +120,8 @@ export function Header({ role }: { role: Role }) {
       <div className="who">
         {role === "admin" ? <span className="muted">Signed in as Principal’s office</span> : null}
         {role === "teacher" && db.teachers.length ? <TeacherIdentity /> : null}
-        {role === "student" || role === "parent" ? <StudentIdentity role={role} /> : null}
+        {role === "student" ? <StudentIdentity /> : null}
+        {role === "parent" ? <ParentIdentity /> : null}
         <button
           type="button"
           className="btn ghost sm"

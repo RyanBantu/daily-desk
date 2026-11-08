@@ -34,7 +34,7 @@ export default function StudentHomework() {
 
   return (
     <>
-      <StudentHead title="Homework" sub="Finish the work, then upload a file or a photo of your notebook." />
+      <StudentHead title="Assignments" sub="Finish the work, then upload a file or a photo of your notebook. Only you can see and submit your own work." />
       <Panel>
         <div className="list">
           {list.length ? (

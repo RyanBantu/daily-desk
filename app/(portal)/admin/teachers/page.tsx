@@ -67,7 +67,7 @@ export default function AdminTeachers() {
     <>
       <PageHead
         eyebrow={PORTAL_LABEL.admin}
-        title="Teachers & subjects"
+        title="Staff records"
         sub="Add staff and set the subjects each teacher heads. Only these teachers can be scheduled for a subject in the timetable."
       />
       <Panel title="Add a teacher">

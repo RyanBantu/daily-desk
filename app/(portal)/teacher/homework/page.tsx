@@ -99,7 +99,7 @@ export default function TeacherHomework() {
 
   return (
     <>
-      <TeacherHead title="Homework" sub="Assign work, check what comes in, score it and send your remarks to parents." />
+      <TeacherHead title="Assignments" sub="Set work for the class you are teaching, check submissions, score them and send remarks to parents." />
       <div className="grid2">
         <Panel title="Assign homework">
           <form className="form" onSubmit={assign}>

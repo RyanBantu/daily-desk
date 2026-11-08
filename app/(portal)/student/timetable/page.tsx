@@ -13,7 +13,7 @@ export default function StudentTimetable() {
   const tt = (s && db.timetable[s.cls]) || {};
   return (
     <>
-      <StudentHead title="Weekly timetable" />
+      <StudentHead title="Subjects & timetable" />
       <Panel>
         <TimetableGrid
           markToday

@@ -58,7 +58,7 @@ export default function AdminOverview() {
       <PageHead
         eyebrow={PORTAL_LABEL.admin}
         title={db.school.name}
-        sub={`Academic year ${db.school.year} · Classes ${GRADES[0]}–${GRADES[GRADES.length - 1]}`}
+        sub={`Academic year ${db.school.year} · Classes ${GRADES[0]}–${GRADES[GRADES.length - 1]} · Each login sees only its own records`}
       />
       <KpiRow
         items={[

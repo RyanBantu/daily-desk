@@ -48,7 +48,27 @@ export interface Student {
   cls: string;
   name: string;
   parent: string;
+  parentId: string;
   phone: string;
+}
+
+export interface Parent {
+  id: string;
+  name: string;
+  phone: string;
+  children: string[];
+}
+
+export type FeeStatus = "paid" | "partial" | "due" | "overdue";
+
+export interface FeeCharge {
+  id: string;
+  sid: string;
+  title: string;
+  amount: number;
+  due: string;
+  paid: number;
+  paidOn: string | null;
 }
 
 export interface Exam {
@@ -178,4 +198,6 @@ export interface DB {
   materials: Material[];
   homework: Homework[];
   submissions: Submission[];
+  parents: Parent[];
+  fees: FeeCharge[];
 }

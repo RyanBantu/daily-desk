@@ -13,7 +13,7 @@ export default function ParentNotices() {
   if (!c) return null;
   return (
     <>
-      <ParentHead title="School notices" />
+      <ParentHead title="School updates" sub="Notices that apply to this child’s class. Whole-school and other classes are hidden." />
       <Panel>
         <NoticeList list={noticesFor(db, c.cls)} />
       </Panel>

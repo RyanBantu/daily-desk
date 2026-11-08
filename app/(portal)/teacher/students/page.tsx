@@ -17,7 +17,7 @@ export default function TeacherStudents() {
   const mutate = useStore((s) => s.mutate);
   const { cls, sub, tid } = useTeacherCtx();
   const [open, setOpen] = useState<string | null>(null);
-  if (!cls) return (<><TeacherHead title="Performance & remarks" /><NoClasses /></>);
+  if (!cls) return (<><TeacherHead title="Feedback & progress" /><NoClasses /></>);
 
   const kids = classStudents(db, cls);
   const hws = db.homework.filter((h) => h.cls === cls && h.subject === sub);
@@ -49,7 +49,7 @@ export default function TeacherStudents() {
 
   return (
     <>
-      <TeacherHead title="Performance & remarks" sub="How each student is doing in your subject. Write a remark and choose whether the parent gets it." />
+      <TeacherHead title="Feedback & progress" sub="How each student in this class and subject is doing. Write a remark and choose whether the parent gets it." />
       <Panel>
         {kids.length ? (
           <div className="scroll">

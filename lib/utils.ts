@@ -88,6 +88,7 @@ export const shortName = (n: string) => {
   return p.length > 1 ? p[0][0] + ". " + p.slice(1).join(" ") : n;
 };
 export const firstName = (n: string) => n.split(" ")[0];
+export const inr = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 export const crestInitials = (schoolName: string) =>
   initials(schoolName.replace(/school|public/gi, "").trim() || schoolName);
 
